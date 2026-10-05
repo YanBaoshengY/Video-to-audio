@@ -1,0 +1,131 @@
+/* 浅色 Apple 风主题。波形画布不用 CSS 类取色，而是 src/waveform.js:210 的
+   getComputedStyle(document.body).getPropertyValue(name)，只认这六个名字：
+   --panel-2 画布底 · --line 未选段包络与刻度网格 · --accent 选段包络/边界/把手
+   --panel 底部刻度条底 · --ink-mute 时间标签 · --warn 播放头。
+   改名或删掉不会报错，只会让波形静默退回 waveform.js 里的深色硬编码兜底值。 */
+:root{
+  color-scheme:light;
+  --bg:#f5f5f7; --panel:#ffffff; --panel-2:#edf0f4; --line:#bcc5d3;
+  --ink:#1d1d1f; --ink-dim:#3f444d; --ink-mute:#6e7480;
+  --accent:#007aff; --accent-deep:#0062d8; --warn:#f5470a; --bad:#ff3b30;
+  --hair:rgba(60,60,67,.14);
+  --radius:14px; --radius-lg:20px; --radius-sm:10px;
+  --ease:cubic-bezier(.32,.72,0,1);
+  --shadow-sm:0 1px 2px rgba(16,24,40,.05);
+  --shadow:0 1px 2px rgba(16,24,40,.04),0 12px 32px rgba(16,24,40,.07);
+}
+/* 作者层的 .panel/.file-meta 用 display:grid 会盖掉 UA 层的 [hidden]{display:none}，
+   导致 hidden 属性失效。Task 7/9 全靠切 hidden 控制显隐，必须在此定死优先级。 */
+[hidden]{display:none !important}
+*{box-sizing:border-box}
+body{margin:0;color:var(--ink);background-color:var(--bg);
+  background-image:radial-gradient(1100px 520px at 50% -240px,#fff 0%,rgba(255,255,255,0) 72%);
+  background-attachment:fixed;background-repeat:no-repeat;
+  font:15px/1.55 -apple-system,BlinkMacSystemFont,"SF Pro Text","Segoe UI Variable",
+    "Segoe UI","Microsoft YaHei",system-ui,sans-serif;
+  -webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility}
+::selection{background:rgba(0,122,255,.16)}
+.shell{max-width:1120px;margin:0 auto;padding:40px 28px 64px}
+.masthead h1{margin:0;font-size:28px;font-weight:700;letter-spacing:-.025em}
+.tagline{margin:6px 0 30px;color:var(--ink-mute);font-size:13px;letter-spacing:.01em}
+/* 半透明磨砂卡片 + 分层柔影：Apple 的"浮在背景上"质感全靠这两条。
+   animation 让 hidden→可见时淡入上浮；transform 只影响 Y，波形指针映射取的是 rect.left。 */
+.panel{background:rgba(255,255,255,.72);-webkit-backdrop-filter:saturate(180%) blur(20px);
+  backdrop-filter:saturate(180%) blur(20px);border:1px solid var(--hair);
+  border-radius:var(--radius-lg);box-shadow:var(--shadow);padding:22px;margin-bottom:20px;
+  animation:panel-in .45s var(--ease) both}
+.drop-zone{border:1.5px dashed var(--line);border-radius:var(--radius);padding:32px 24px;
+  text-align:center;background:rgba(0,0,0,.016);
+  transition:border-color .25s var(--ease),background .25s var(--ease)}
+.drop-zone:hover{border-color:#adb7c6;background:rgba(0,122,255,.03)}
+.drop-zone.is-over{border-color:var(--accent);background:rgba(0,122,255,.07)}
+.drop-title{margin:0;font-size:17px;font-weight:600;letter-spacing:-.01em}
+.drop-hint{margin:7px 0 16px;color:var(--ink-mute);font-size:13px}
+#file-input{font-size:13px;color:var(--ink-mute)}
+#file-input::file-selector-button{margin-right:12px;padding:6px 13px;border:1px solid var(--hair);
+  border-radius:var(--radius-sm);background:#fff;color:var(--ink);font:inherit;font-size:13px;
+  box-shadow:var(--shadow-sm);cursor:pointer;
+  transition:transform .2s var(--ease),background .2s var(--ease)}
+#file-input::file-selector-button:hover{background:#f6f7f9;transform:translateY(-1px)}
+/* .file-meta b{display:block} 是 app.js renderMeta 的"值在上、标签在下"依赖，别改行内。 */
+.file-meta{margin-top:18px;display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));
+  gap:12px 14px;animation:fade-in .3s var(--ease) both}
+.file-meta div{padding:10px 12px;border-radius:var(--radius-sm);border:1px solid var(--hair);
+  background:rgba(0,0,0,.024);font-size:12px;color:var(--ink-mute)}
+.file-meta b{display:block;color:var(--ink);font-weight:600;font-size:15px;letter-spacing:-.01em;
+  font-variant-numeric:tabular-nums;overflow-wrap:anywhere}
+.gate-bar{margin-top:16px;padding:13px 15px;border-radius:12px;font-size:13px;
+  background:rgba(255,149,0,.09);border:1px solid rgba(255,149,0,.3);color:#8a5200;
+  animation:fade-in .3s var(--ease) both}
+.gate-bar button{margin-left:10px}
+.banner{padding:14px 17px;border-radius:12px;margin-bottom:20px;font-size:14px;
+  background:rgba(255,59,48,.07);border:1px solid rgba(255,59,48,.24);color:#a3160b;
+  animation:fade-in .3s var(--ease) both}
+.banner-x{float:right;background:none;border:0;color:inherit;font-size:19px;cursor:pointer;
+  line-height:1;opacity:.6;transition:opacity .2s var(--ease),transform .2s var(--ease)}
+.banner-x:hover{opacity:1;transform:scale(1.12)}
+.wave-wrap{background:var(--panel-2);border-radius:var(--radius);padding:8px;overflow:hidden;
+  border:1px solid var(--hair)}
+/* display/width/height/touch-action 被指针映射与像素断言依赖，只能加装饰属性。 */
+#waveform{display:block;width:100%;height:220px;touch-action:none;cursor:crosshair;
+  border-radius:var(--radius-sm)}
+.transport{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-top:14px;font-size:13px}
+.readout{padding:5px 13px;border-radius:999px;border:1px solid var(--hair);
+  background:rgba(0,0,0,.035);color:var(--ink-dim);font-variant-numeric:tabular-nums}
+.hint{color:var(--ink-mute);font-size:12px}
+.zoom-label{position:relative;display:inline-flex;align-items:center;gap:8px;color:var(--ink-dim)}
+/* 自绘下拉箭头：appearance:none 后用两条 border 折出 chevron，避免 data-URI 或外部图标。
+   ::after 贴 .zoom-label 右缘，因为 select 是它最后一个子元素。 */
+.zoom-label::after{content:"";position:absolute;right:10px;top:50%;width:6px;height:6px;
+  border-right:1.6px solid var(--ink-mute);border-bottom:1.6px solid var(--ink-mute);
+  transform:translateY(-70%) rotate(45deg);pointer-events:none}
+select{-webkit-appearance:none;appearance:none;background:var(--panel-2);color:var(--ink);
+  border:1px solid var(--hair);border-radius:var(--radius-sm);padding:5px 26px 5px 11px;
+  font:inherit;font-size:13px;cursor:pointer;
+  transition:border-color .2s var(--ease),background .2s var(--ease)}
+select:hover{background:#e6e9f0;border-color:#b3bccb}
+.panel-params{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:16px;align-items:end}
+.field label{display:block;font-size:12px;font-weight:600;color:var(--ink-mute);
+  letter-spacing:.02em;margin-bottom:7px}
+#gain-readout{margin-left:6px;color:var(--ink-dim);font-weight:600;letter-spacing:0;
+  font-variant-numeric:tabular-nums}
+.field-wide{grid-column:span 2}
+.field-actions{display:flex;align-items:center;gap:12px}
+input[type=number]{background:var(--panel-2);color:var(--ink);border:1px solid var(--hair);
+  border-radius:var(--radius-sm);padding:8px 10px;width:100%;font:inherit;
+  font-variant-numeric:tabular-nums;
+  transition:border-color .2s var(--ease),background .2s var(--ease),box-shadow .2s var(--ease)}
+input[type=number]:hover{border-color:#b3bccb}
+input[type=number]:focus{outline:none;background:#fff;border-color:var(--accent);
+  box-shadow:0 0 0 4px rgba(0,122,255,.16)}
+/* 音量滑块交给 accent-color 画原生轨道，进度填充比自绘 track 更准也更稳。 */
+input[type=range]{width:100%;accent-color:var(--accent);cursor:pointer}
+.btn{border-radius:var(--radius-sm);border:1px solid var(--hair);padding:8px 16px;font:inherit;
+  font-size:13px;font-weight:500;cursor:pointer;background:#fff;color:var(--ink);
+  box-shadow:var(--shadow-sm);
+  transition:transform .2s var(--ease),background .2s var(--ease),box-shadow .2s var(--ease),
+    border-color .2s var(--ease),opacity .2s var(--ease)}
+.btn:hover:not(:disabled){background:#f6f7f9;transform:translateY(-1px);
+  box-shadow:0 2px 10px rgba(16,24,40,.09)}
+.btn:active:not(:disabled){transform:translateY(0) scale(.98);box-shadow:var(--shadow-sm)}
+.btn:focus-visible,select:focus-visible{outline:none;box-shadow:0 0 0 4px rgba(0,122,255,.28)}
+.btn:disabled{opacity:.4;cursor:not-allowed;box-shadow:none}
+.btn-primary{background:rgba(0,122,255,.1);border-color:rgba(0,122,255,.24);color:var(--accent-deep)}
+.btn-primary:hover:not(:disabled){background:rgba(0,122,255,.16)}
+.btn-solid{background:var(--accent);border-color:transparent;color:#fff;font-weight:600;
+  box-shadow:0 4px 14px rgba(0,122,255,.3)}
+.btn-solid:hover:not(:disabled){background:#0a84ff;box-shadow:0 6px 20px rgba(0,122,255,.36)}
+.btn-ghost{background:rgba(255,149,0,.14);border-color:rgba(255,149,0,.34);color:#8a5200}
+.btn-ghost:hover:not(:disabled){background:rgba(255,149,0,.22)}
+.btn-quiet{background:transparent;border-color:transparent;box-shadow:none}
+.btn-quiet:hover:not(:disabled){background:rgba(0,0,0,.05);box-shadow:none}
+.foot{color:var(--ink-mute);font-size:12.5px;margin-top:10px;padding-top:16px;
+  border-top:1px solid var(--hair)}
+body[data-state="decoding"] .drop-zone{opacity:.55}
+@keyframes panel-in{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+@keyframes fade-in{from{opacity:0}to{opacity:1}}
+@media (prefers-reduced-motion:reduce){
+  *,*::before,*::after{animation-duration:.01ms !important;transition-duration:.01ms !important}
+  .btn:hover:not(:disabled),#file-input::file-selector-button:hover{transform:none}
+  .panel{-webkit-backdrop-filter:none;backdrop-filter:none;background:var(--panel)}
+}

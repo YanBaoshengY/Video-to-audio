@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>音频提取与剪辑</title>
+<link rel="stylesheet" href="styles.css">
+</head>
+<body data-state="empty">
+<main class="shell">
+  <header class="masthead">
+    <h1>音频提取与剪辑</h1>
+    <p class="tagline">本地解码 · 文件不出本机</p>
+  </header>
+
+  <section class="panel panel-file">
+    <div id="drop-zone" class="drop-zone">
+      <p class="drop-title">把视频拖到这里</p>
+      <p class="drop-hint">MP4 / MOV / M4A，10 分钟内最稳；也接受 WAV、MP3 等纯音频文件</p>
+      <input type="file" id="file-input" accept="video/*,audio/*,.m4a,.mov">
+    </div>
+    <div id="file-meta" class="file-meta" hidden></div>
+    <div id="gate-bar" class="gate-bar" hidden>
+      <span id="gate-text"></span>
+      <button type="button" id="gate-yes" class="btn btn-ghost">继续</button>
+      <button type="button" id="gate-no" class="btn btn-quiet">取消</button>
+    </div>
+  </section>
+
+  <div id="banner" class="banner" role="alert" hidden>
+    <span id="banner-text"></span>
+    <button type="button" id="banner-close" class="banner-x" aria-label="关闭">×</button>
+  </div>
+
+  <section class="panel panel-wave" hidden id="panel-wave">
+    <div class="wave-wrap">
+      <canvas id="waveform" width="1200" height="220"></canvas>
+    </div>
+    <div class="transport">
+      <button type="button" id="btn-play" class="btn btn-primary" disabled>试听选段</button>
+      <button type="button" id="btn-stop" class="btn btn-quiet" disabled>停止</button>
+      <span id="time-readout" class="readout">0.00 / 0.00 s</span>
+      <label class="zoom-label">缩放
+        <select id="zoom-select">
+          <option value="fit" selected>适应窗口</option>
+          <option value="40">40 px/s</option>
+          <option value="80">80 px/s</option>
+          <option value="160">160 px/s</option>
+          <option value="320">320 px/s</option>
+        </select>
+      </label>
+      <span class="hint">滚轮平移 · Ctrl+滚轮缩放 · 拖动波形选段</span>
+    </div>
+  </section>
+
+  <section class="panel panel-params" hidden id="panel-params">
+    <div class="field">
+      <label for="sel-start">选段起点（秒）</label>
+      <input type="number" id="sel-start" step="0.01" min="0" value="0">
+    </div>
+    <div class="field">
+      <label for="sel-end">选段终点（秒）</label>
+      <input type="number" id="sel-end" step="0.01" min="0" value="0">
+    </div>
+    <div class="field field-wide">
+      <label for="gain-slider">音量 <span id="gain-readout">×1.00 · 0.0 dB</span></label>
+      <input type="range" id="gain-slider" min="0" max="2" step="0.01" value="1">
+    </div>
+    <div class="field">
+      <label for="fade-in">淡入（秒）</label>
+      <input type="number" id="fade-in" step="0.05" min="0" value="0">
+    </div>
+    <div class="field">
+      <label for="fade-out">淡出（秒）</label>
+      <input type="number" id="fade-out" step="0.05" min="0" value="0">
+    </div>
+    <div class="field field-actions">
+      <button type="button" id="btn-export" class="btn btn-solid" disabled>导出 WAV</button>
+      <span id="export-note" class="hint"></span>
+    </div>
+  </section>
+
+  <footer class="foot">
+    <p>解码依赖浏览器内置解码器。Firefox 对 MP4 支持很差，请使用 Chrome 或 Edge。</p>
+  </footer>
+</main>
+
+<script src="src/wav.js"></script>
+<script src="src/edit.js"></script>
+<script src="src/waveform.js"></script>
+<script src="src/decode.js"></script>
+<script src="src/player.js"></script>
+<script src="src/app.js"></script>
+<script>VA.app.init();</script>
+</body>
+</html>
