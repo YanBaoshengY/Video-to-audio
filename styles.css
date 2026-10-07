@@ -1,6 +1,7 @@
 /* 浅色 Apple 风主题。波形画布不用 CSS 类取色，而是 src/waveform.js:210 的
-   getComputedStyle(document.body).getPropertyValue(name)，只认这六个名字：
-   --panel-2 画布底 · --line 未选段包络与刻度网格 · --accent 选段包络/边界/把手
+   getComputedStyle(document.body).getPropertyValue(name)，只认这七个名字：
+   --panel-2 画布底 · --line 未选段包络与刻度网格 · --accent 选段包络与边界线
+   --accent-deep 选段把手（读不到时退回 --accent）
    --panel 底部刻度条底 · --ink-mute 时间标签 · --warn 播放头。
    改名或删掉不会报错，只会让波形静默退回 waveform.js 里的深色硬编码兜底值。 */
 :root{

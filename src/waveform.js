@@ -192,11 +192,14 @@ VA.waveform = (function () {
       // 只画到波形区，不穿进底部刻度条（否则竖线会和时间标签叠在一起）
       ctx2d.beginPath(); ctx2d.moveTo(lo, 0); ctx2d.lineTo(lo, waveH); ctx2d.stroke();
       ctx2d.beginPath(); ctx2d.moveTo(hi, 0); ctx2d.lineTo(hi, waveH); ctx2d.stroke();
-      // 把手：垂直居中于**波形中线**，不是整块画布中线（画布含底部刻度条，用 H 会偏低）
-      ctx2d.fillStyle = getCss('--accent') || '#5ad1c4';
+      // 把手：垂直居中于**波形中线**，不是整块画布中线（画布含底部刻度条，用 H 会偏低）。
+      // 只往选段**内侧**画：越过边界线伸到未选区，看着就像线上挂了个多余的色块
+      // （未选区是浅灰，蓝色小方块浮在它上面尤其像渲染故障——用户 2026-10-07 反馈）。
+      // 命中区仍是线两侧各 HANDLE_PX（hitTarget 不看绘制），所以往内收不损失可拖范围。
+      ctx2d.fillStyle = getCss('--accent-deep') || getCss('--accent') || '#5ad1c4';
       var hw = 3 * dpr, hh = 16 * dpr;
-      ctx2d.fillRect(lo - hw, waveH / 2 - hh / 2, hw * 2, hh);
-      ctx2d.fillRect(hi - hw, waveH / 2 - hh / 2, hw * 2, hh);
+      ctx2d.fillRect(lo, waveH / 2 - hh / 2, hw, hh);
+      ctx2d.fillRect(hi - hw, waveH / 2 - hh / 2, hw, hh);
     }
 
     function drawPlayhead(W, H) {
